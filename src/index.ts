@@ -11,6 +11,7 @@ import { env } from './config/env';
 import connectDB from './config/db';
 import errorHandler from './middlewares/errorHandler';
 import tourRoutes from './routes/tour.routes';
+import bookingRoutes from './routes/booking.routes';
 import ApiResponse from './utils/ApiResponse';
 
 // Connect to MongoDB
@@ -58,6 +59,9 @@ app.get('/api/health', (req, res) => {
 
 // Tour routes
 app.use('/api/tours', tourRoutes);
+
+// Booking routes
+app.use('/api/bookings', bookingRoutes);
 
 // Protected route example (for testing)
 app.get('/api/auth/me', (req, res) => {
