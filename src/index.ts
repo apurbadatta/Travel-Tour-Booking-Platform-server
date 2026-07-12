@@ -1,12 +1,16 @@
+const dns = require("node:dns");
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { toNodeHandler } from 'better-auth/node';
-import { auth } from './config/auth';
+import { getAuth } from './config/auth';
 import { env } from './config/env';
 import connectDB from './config/db';
 import errorHandler from './middlewares/errorHandler';
+import tourRoutes from './routes/tour.routes';
 import ApiResponse from './utils/ApiResponse';
 
 // Connect to MongoDB
@@ -29,7 +33,10 @@ app.use(
 
 // better-auth handler - MUST be BEFORE express.json() body parsing
 // This handles all /api/auth/* routes automatically
-app.all('/api/auth/{*splat}', toNodeHandler(auth));
+// Lazy handler: getAuth() is called per-request, after DB is connected
+app.use('/api/auth', (req, res) => {
+  toNodeHandler(getAuth())(req, res);
+});
 
 // Body parsing middleware - AFTER better-auth handler
 app.use(express.json());
@@ -48,6 +55,9 @@ app.get('/api/health', (req, res) => {
   });
   res.status(response.statusCode).json(response);
 });
+
+// Tour routes
+app.use('/api/tours', tourRoutes);
 
 // Protected route example (for testing)
 app.get('/api/auth/me', (req, res) => {

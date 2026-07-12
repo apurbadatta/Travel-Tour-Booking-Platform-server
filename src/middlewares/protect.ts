@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { auth } from '../config/auth';
+import { getAuth } from '../config/auth';
 import { AuthRequest } from '../types';
 import ApiResponse from '../utils/ApiResponse';
 
@@ -21,7 +21,7 @@ export const protect = async (
     }
 
     // Get session from better-auth using the constructed Headers
-    const session = await auth.api.getSession({
+    const session = await getAuth().api.getSession({
       headers,
     });
 
