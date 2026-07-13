@@ -7,6 +7,7 @@ import Destination from '../models/Destination.model';
 import asyncHandler from '../utils/asyncHandler';
 import ApiError from '../utils/ApiError';
 import ApiResponse from '../utils/ApiResponse';
+import { AuthRequest } from '../types';
 
 export const getTours = asyncHandler(async (req: Request, res: Response) => {
   const {
@@ -25,7 +26,7 @@ export const getTours = asyncHandler(async (req: Request, res: Response) => {
   const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10)));
   const skip = (pageNum - 1) * limitNum;
 
-  const filter: Record<string, any> = { isActive: true };
+  const filter: Record<string, any> = { isActive: true, status: 'approved' };
 
   if (category) {
     // Support both ObjectId and slug
@@ -105,7 +106,7 @@ export const getTours = asyncHandler(async (req: Request, res: Response) => {
 export const getTourById = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const tour = await Tour.findById(id)
+  const tour = await Tour.findOne({ _id: id, status: 'approved' })
     .populate('destination', 'name slug description image region')
     .populate('category', 'name slug description icon')
     .lean();
@@ -199,6 +200,7 @@ export const getRelatedTours = asyncHandler(async (req: Request, res: Response) 
     _id: { $ne: id },
     category: tour.category,
     isActive: true,
+    status: 'approved',
   })
     .populate('destination', 'name slug image region')
     .populate('category', 'name slug icon')
@@ -207,4 +209,268 @@ export const getRelatedTours = asyncHandler(async (req: Request, res: Response) 
     .lean();
 
   res.status(200).json(new ApiResponse(200, 'Related tours fetched successfully', relatedTours));
+});
+
+export const createTour = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    throw new ApiError(401, 'Not authenticated');
+  }
+
+  const {
+    title,
+    shortDescription,
+    description,
+    price,
+    discountPrice,
+    duration,
+    category,
+    destination,
+    thumbnail,
+    images,
+    maxGroupSize,
+    difficulty,
+    highlights,
+    included,
+    excluded,
+    departureLocation,
+    startPoint,
+    endPoint,
+    startDates,
+    isFeatured,
+  } = req.body;
+
+  // Validate required fields
+  if (!title || !shortDescription || !description || !price || !duration || !category || !destination || !thumbnail || !maxGroupSize || !departureLocation || !startPoint || !endPoint) {
+    throw new ApiError(400, 'Missing required fields: title, shortDescription, description, price, duration, category, destination, thumbnail, maxGroupSize, departureLocation, startPoint, endPoint');
+  }
+
+  // Validate category exists
+  const categoryDoc = await Category.findById(category);
+  if (!categoryDoc) {
+    throw new ApiError(400, 'Invalid category');
+  }
+
+  // Validate destination exists
+  const destinationDoc = await Destination.findById(destination);
+  if (!destinationDoc) {
+    throw new ApiError(400, 'Invalid destination');
+  }
+
+  // Validate duration
+  if (!duration.days || duration.days < 1) {
+    throw new ApiError(400, 'Duration days must be at least 1');
+  }
+
+  const tour = await Tour.create({
+    title,
+    shortDescription,
+    description,
+    price: parseFloat(price),
+    discountPrice: discountPrice ? parseFloat(discountPrice) : undefined,
+    duration: {
+      days: parseInt(duration.days),
+      nights: parseInt(duration.nights) || 0,
+    },
+    category,
+    destination,
+    thumbnail,
+    images: images || [],
+    maxGroupSize: parseInt(maxGroupSize),
+    difficulty: difficulty || 'moderate',
+    highlights: highlights || [],
+    included: included || [],
+    excluded: excluded || [],
+    departureLocation,
+    startPoint,
+    endPoint,
+    startDates: startDates || [],
+    isFeatured: isFeatured || false,
+    status: 'pending',
+    createdBy: userId,
+  });
+
+  const populatedTour = await Tour.findById(tour._id)
+    .populate('destination', 'name slug image region')
+    .populate('category', 'name slug icon')
+    .lean();
+
+  res.status(201).json(new ApiResponse(201, 'Tour submitted successfully. Pending admin approval.', populatedTour));
+});
+
+export const getMyTours = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    throw new ApiError(401, 'Not authenticated');
+  }
+
+  const { page = '1', limit = '12', sortBy = '-createdAt', status } = req.query;
+
+  const pageNum = Math.max(1, parseInt(page as string, 10));
+  const limitNum = Math.min(50, Math.max(1, parseInt(limit as string, 10)));
+  const skip = (pageNum - 1) * limitNum;
+
+  const filter: Record<string, any> = { createdBy: userId };
+
+  if (status && ['pending', 'approved', 'rejected'].includes(status as string)) {
+    filter.status = status;
+  }
+
+  const sortStr = sortBy as string;
+  const sort: Record<string, 1 | -1> = {};
+  if (sortStr.startsWith('-')) {
+    sort[sortStr.substring(1)] = -1;
+  } else {
+    sort[sortStr] = 1;
+  }
+
+  const [tours, total] = await Promise.all([
+    Tour.find(filter)
+      .populate('destination', 'name slug image region')
+      .populate('category', 'name slug icon')
+      .sort(sort)
+      .skip(skip)
+      .limit(limitNum)
+      .lean(),
+    Tour.countDocuments(filter),
+  ]);
+
+  const totalPages = Math.ceil(total / limitNum);
+
+  const response = {
+    tours,
+    pagination: {
+      page: pageNum,
+      limit: limitNum,
+      total,
+      totalPages,
+      hasNext: pageNum < totalPages,
+      hasPrev: pageNum > 1,
+    },
+  };
+
+  res.status(200).json(new ApiResponse(200, 'My tours fetched successfully', response));
+});
+
+export const updateTour = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    throw new ApiError(401, 'Not authenticated');
+  }
+
+  const { id } = req.params;
+
+  const tour = await Tour.findById(id);
+  if (!tour) {
+    throw new ApiError(404, 'Tour not found');
+  }
+
+  // Ownership check: user must own the tour
+  if (tour.createdBy.toString() !== userId) {
+    throw new ApiError(403, 'You can only edit your own tours');
+  }
+
+  const {
+    title,
+    shortDescription,
+    description,
+    price,
+    discountPrice,
+    duration,
+    category,
+    destination,
+    thumbnail,
+    images,
+    maxGroupSize,
+    difficulty,
+    highlights,
+    included,
+    excluded,
+    departureLocation,
+    startPoint,
+    endPoint,
+    startDates,
+  } = req.body;
+
+  // Validate required fields
+  if (!title || !shortDescription || !description || !price || !duration || !category || !destination || !thumbnail || !maxGroupSize || !departureLocation || !startPoint || !endPoint) {
+    throw new ApiError(400, 'Missing required fields: title, shortDescription, description, price, duration, category, destination, thumbnail, maxGroupSize, departureLocation, startPoint, endPoint');
+  }
+
+  // Validate category exists
+  const categoryDoc = await Category.findById(category);
+  if (!categoryDoc) {
+    throw new ApiError(400, 'Invalid category');
+  }
+
+  // Validate destination exists
+  const destinationDoc = await Destination.findById(destination);
+  if (!destinationDoc) {
+    throw new ApiError(400, 'Invalid destination');
+  }
+
+  // Validate duration
+  if (!duration.days || duration.days < 1) {
+    throw new ApiError(400, 'Duration days must be at least 1');
+  }
+
+  // Update fields and force status back to pending for re-approval
+  tour.title = title;
+  tour.shortDescription = shortDescription;
+  tour.description = description;
+  tour.price = parseFloat(price);
+  tour.discountPrice = discountPrice ? parseFloat(discountPrice) : undefined;
+  tour.duration = {
+    days: parseInt(duration.days),
+    nights: parseInt(duration.nights) || 0,
+  };
+  tour.category = category;
+  tour.destination = destination;
+  tour.thumbnail = thumbnail;
+  tour.images = images || [];
+  tour.maxGroupSize = parseInt(maxGroupSize);
+  tour.difficulty = difficulty || 'moderate';
+  tour.highlights = highlights || [];
+  tour.included = included || [];
+  tour.excluded = excluded || [];
+  tour.departureLocation = departureLocation;
+  tour.startPoint = startPoint;
+  tour.endPoint = endPoint;
+  tour.startDates = startDates || [];
+  // Force re-approval
+  tour.status = 'pending';
+  tour.rejectionReason = undefined;
+
+  await tour.save();
+
+  const populatedTour = await Tour.findById(tour._id)
+    .populate('destination', 'name slug image region')
+    .populate('category', 'name slug icon')
+    .lean();
+
+  res.status(200).json(new ApiResponse(200, 'Tour updated successfully. Pending admin re-approval.', populatedTour));
+});
+
+export const deleteTour = asyncHandler(async (req: AuthRequest, res: Response) => {
+  const userId = req.user?.id;
+  if (!userId) {
+    throw new ApiError(401, 'Not authenticated');
+  }
+
+  const { id } = req.params;
+
+  const tour = await Tour.findById(id);
+  if (!tour) {
+    throw new ApiError(404, 'Tour not found');
+  }
+
+  // Ownership check: user must own the tour OR be admin
+  const userRole = (req.user as any).role;
+  if (tour.createdBy.toString() !== userId && userRole !== 'admin') {
+    throw new ApiError(403, 'You can only delete your own tours');
+  }
+
+  await Tour.findByIdAndDelete(id);
+
+  res.status(200).json(new ApiResponse(200, 'Tour deleted successfully', null));
 });

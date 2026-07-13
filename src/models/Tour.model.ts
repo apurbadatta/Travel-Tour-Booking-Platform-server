@@ -38,6 +38,10 @@ export interface ITour extends Document {
   };
   isFeatured: boolean;
   isActive: boolean;
+  status: 'pending' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  reviewedBy?: mongoose.Types.ObjectId;
+  reviewedAt?: Date;
   createdBy: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -180,6 +184,22 @@ const tourSchema = new Schema<ITour>(
     isActive: {
       type: Boolean,
       default: true,
+    },
+    status: {
+      type: String,
+      enum: ['pending', 'approved', 'rejected'],
+      default: 'pending',
+    },
+    rejectionReason: {
+      type: String,
+      trim: true,
+    },
+    reviewedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    reviewedAt: {
+      type: Date,
     },
     createdBy: {
       type: Schema.Types.ObjectId,

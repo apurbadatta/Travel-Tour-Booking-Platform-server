@@ -9,13 +9,16 @@ import { toNodeHandler } from 'better-auth/node';
 import { getAuth } from './config/auth';
 import { env } from './config/env';
 import connectDB from './config/db';
+import { autoSeed } from './autoSeed';
 import errorHandler from './middlewares/errorHandler';
 import tourRoutes from './routes/tour.routes';
 import bookingRoutes from './routes/booking.routes';
+import adminRoutes from './routes/admin.routes';
+import contactRoutes from './routes/contact.routes';
 import ApiResponse from './utils/ApiResponse';
 
-// Connect to MongoDB
-connectDB();
+// Connect to MongoDB and auto-seed
+connectDB().then(() => autoSeed());
 
 const app = express();
 
@@ -62,6 +65,12 @@ app.use('/api/tours', tourRoutes);
 
 // Booking routes
 app.use('/api/bookings', bookingRoutes);
+
+// Admin routes
+app.use('/api/admin', adminRoutes);
+
+// Contact routes
+app.use('/api/contact', contactRoutes);
 
 // Protected route example (for testing)
 app.get('/api/auth/me', (req, res) => {
