@@ -32,7 +32,7 @@ export const getAuth = (): any => {
         google: {
           clientId: env.GOOGLE_CLIENT_ID,
           clientSecret: env.GOOGLE_CLIENT_SECRET,
-          redirectURI: `${env.CLIENT_URL}/api/auth/callback/google`,
+          callbackURL: `${env.CLIENT_URL}/`,
         },
       },
 
