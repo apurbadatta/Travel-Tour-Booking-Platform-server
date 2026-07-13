@@ -15,6 +15,7 @@ import tourRoutes from './routes/tour.routes';
 import bookingRoutes from './routes/booking.routes';
 import adminRoutes from './routes/admin.routes';
 import contactRoutes from './routes/contact.routes';
+import userProfileRoutes from './routes/user-profile.routes';
 import ApiResponse from './utils/ApiResponse';
 
 // Connect to MongoDB and auto-seed
@@ -71,6 +72,9 @@ app.use('/api/admin', adminRoutes);
 
 // Contact routes
 app.use('/api/contact', contactRoutes);
+
+// Profile routes
+app.use('/api/profile', userProfileRoutes);
 
 // Protected route example (for testing)
 app.get('/api/auth/me', (req, res) => {
