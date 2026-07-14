@@ -2,14 +2,16 @@
   "name": "tourify-server",
   "version": "1.0.0",
   "description": "Tourify Travel & Tour Booking Platform - Backend API",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "node ./node_modules/ts-node-dev/lib/bin.js --respawn --transpile-only src/index.ts",
+    "dev": "node ./node_modules/ts-node-dev/lib/bin.js --respawn --transpile-only --esm src/index.ts",
     "build": "node ./node_modules/typescript/lib/tsc.js",
     "start": "node dist/index.js",
+    "vercel-build": "node ./node_modules/typescript/lib/tsc.js",
     "lint": "node ./node_modules/eslint/bin/eslint.js src --ext .ts",
     "lint:fix": "node ./node_modules/eslint/bin/eslint.js src --ext .ts --fix",
-    "seed": "node ./node_modules/ts-node-dev/lib/bin.js --transpile-only src/seed.ts"
+    "seed": "node ./node_modules/ts-node-dev/lib/bin.js --transpile-only --esm src/seed.ts"
   },
   "dependencies": {
     "better-auth": "^1.6.23",
