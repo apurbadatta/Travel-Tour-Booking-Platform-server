@@ -27,10 +27,27 @@ const app = express();
 app.use(helmet());
 
 // CORS configuration - MUST be before better-auth handler
+const allowedOrigins = [
+  env.CLIENT_URL,
+  'http://localhost:3000',
+  'http://localhost:3001',
+];
+
 app.use(
   cors({
-    origin: env.CLIENT_URL,
-    credentials: true, // Required for cookies
+    origin: (origin, callback) => {
+      // Allow requests with no origin (mobile apps, curl, etc.)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      // In development, allow all origins
+      if (env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+      callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   })
@@ -85,10 +102,24 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Start server
-app.listen(env.PORT, () => {
-  console.log(`Server running in ${env.NODE_ENV} mode on port ${env.PORT}`);
-  console.log(`Auth endpoints available at: ${env.BETTER_AUTH_URL}/api/auth/*`);
-});
+// Start server with auto port detection
+const startServer = (port: number) => {
+  app.listen(port)
+    .on('listening', () => {
+      console.log(`Server running in ${env.NODE_ENV} mode on port ${port}`);
+      console.log(`Auth endpoints available at: ${env.BETTER_AUTH_URL}/api/auth/*`);
+    })
+    .on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        console.warn(`Port ${port} is busy, trying port ${port + 1}...`);
+        startServer(port + 1);
+      } else {
+        console.error('Server error:', err);
+        process.exit(1);
+      }
+    });
+};
+
+startServer(env.PORT);
 
 export default app;
