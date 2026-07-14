@@ -18,16 +18,6 @@ import contactRoutes from './routes/contact.routes';
 import userProfileRoutes from './routes/user-profile.routes';
 import ApiResponse from './utils/ApiResponse';
 
-let dbConnected = false;
-
-async function ensureDB() {
-  if (!dbConnected) {
-    await connectDB();
-    await autoSeed();
-    dbConnected = true;
-  }
-}
-
 const app = express();
 
 // Security middleware
@@ -60,8 +50,7 @@ app.use(
 );
 
 // better-auth handler - MUST be BEFORE express.json() body parsing
-app.use('/api/auth', async (req, res) => {
-  await ensureDB();
+app.use('/api/auth', (req, res) => {
   toNodeHandler(getAuth())(req, res);
 });
 
@@ -75,8 +64,7 @@ if (env.NODE_ENV === 'development') {
 }
 
 // Health check route
-app.get('/api/health', async (_req, res) => {
-  await ensureDB();
+app.get('/api/health', (_req, res) => {
   const response = new ApiResponse(200, 'Server is running', {
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -87,34 +75,19 @@ app.get('/api/health', async (_req, res) => {
 });
 
 // Tour routes
-app.use('/api/tours', async (req, res, next) => {
-  await ensureDB();
-  tourRoutes(req, res, next);
-});
+app.use('/api/tours', tourRoutes);
 
 // Booking routes
-app.use('/api/bookings', async (req, res, next) => {
-  await ensureDB();
-  bookingRoutes(req, res, next);
-});
+app.use('/api/bookings', bookingRoutes);
 
 // Admin routes
-app.use('/api/admin', async (req, res, next) => {
-  await ensureDB();
-  adminRoutes(req, res, next);
-});
+app.use('/api/admin', adminRoutes);
 
 // Contact routes
-app.use('/api/contact', async (req, res, next) => {
-  await ensureDB();
-  contactRoutes(req, res, next);
-});
+app.use('/api/contact', contactRoutes);
 
 // Profile routes
-app.use('/api/profile', async (req, res, next) => {
-  await ensureDB();
-  userProfileRoutes(req, res, next);
-});
+app.use('/api/profile', userProfileRoutes);
 
 // 404 handler for undefined routes
 app.use('*', (req, res) => {
@@ -125,8 +98,10 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// For local development
-if (env.NODE_ENV !== 'production') {
+// Connect to MongoDB and auto-seed, then start server
+connectDB().then(() => {
+  autoSeed();
+
   const startServer = (port: number) => {
     app.listen(port)
       .on('listening', () => {
@@ -143,8 +118,8 @@ if (env.NODE_ENV !== 'production') {
         }
       });
   };
-  startServer(env.PORT);
-}
 
-// Vercel serverless function export
+  startServer(env.PORT);
+});
+
 export default app;
