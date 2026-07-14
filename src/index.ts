@@ -76,16 +76,6 @@ app.use('/api/contact', contactRoutes);
 // Profile routes
 app.use('/api/profile', userProfileRoutes);
 
-// Protected route example (for testing)
-app.get('/api/auth/me', (req, res) => {
-  // This is a simple example - in practice, use the protect middleware
-  // better-auth handles /api/auth/me automatically via its handler
-  const response = new ApiResponse(200, 'Auth endpoint', {
-    message: 'Use better-auth client to access this endpoint',
-  });
-  res.status(response.statusCode).json(response);
-});
-
 // 404 handler for undefined routes
 app.use('*', (req, res) => {
   const response = new ApiResponse(404, `Route ${req.originalUrl} not found`, null);

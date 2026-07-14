@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import Category from './models/Category.model';
 import Destination from './models/Destination.model';
 import Tour from './models/Tour.model';
@@ -538,18 +537,10 @@ const tours = [
 ];
 
 async function seed() {
-  let mongod: MongoMemoryServer | null = null;
   try {
     console.log('Connecting to MongoDB...');
-    try {
-      await mongoose.connect(MONGO_URI);
-      console.log('Connected to MongoDB.\n');
-    } catch {
-      console.log('Primary MongoDB unavailable, starting in-memory MongoDB...');
-      mongod = await MongoMemoryServer.create();
-      await mongoose.connect(mongod.getUri());
-      console.log('Connected to in-memory MongoDB.\n');
-    }
+    await mongoose.connect(MONGO_URI);
+    console.log('Connected to MongoDB.\n');
 
     // Clear existing data
     console.log('Clearing existing data...');
@@ -593,12 +584,10 @@ async function seed() {
     console.log(`  Destinations: ${createdDestinations.length}`);
     console.log(`  Tours: ${createdTours.length}`);
     await mongoose.disconnect();
-    if (mongod) await mongod.stop();
     process.exit(0);
   } catch (error) {
     console.error('Seed failed:', error);
     await mongoose.disconnect().catch(() => {});
-    if (mongod) await mongod.stop().catch(() => {});
     process.exit(1);
   }
 }

@@ -262,6 +262,9 @@ export const createTour = asyncHandler(async (req: AuthRequest, res: Response) =
     throw new ApiError(400, 'Duration days must be at least 1');
   }
 
+  const userRole = (req.user as any).role;
+  const isAdmin = userRole === 'admin';
+
   const tour = await Tour.create({
     title,
     shortDescription,
@@ -286,7 +289,7 @@ export const createTour = asyncHandler(async (req: AuthRequest, res: Response) =
     endPoint,
     startDates: startDates || [],
     isFeatured: isFeatured || false,
-    status: 'pending',
+    status: isAdmin ? 'approved' : 'pending',
     createdBy: userId,
   });
 
@@ -295,7 +298,11 @@ export const createTour = asyncHandler(async (req: AuthRequest, res: Response) =
     .populate('category', 'name slug icon')
     .lean();
 
-  res.status(201).json(new ApiResponse(201, 'Tour submitted successfully. Pending admin approval.', populatedTour));
+  const message = isAdmin
+    ? 'Tour created successfully and published live.'
+    : 'Tour submitted successfully. Pending admin approval.';
+
+  res.status(201).json(new ApiResponse(201, message, populatedTour));
 });
 
 export const getMyTours = asyncHandler(async (req: AuthRequest, res: Response) => {
@@ -365,8 +372,9 @@ export const updateTour = asyncHandler(async (req: AuthRequest, res: Response) =
     throw new ApiError(404, 'Tour not found');
   }
 
-  // Ownership check: user must own the tour
-  if (tour.createdBy.toString() !== userId) {
+  // Ownership check: user must own the tour OR be admin
+  const userRole = (req.user as any).role;
+  if (tour.createdBy.toString() !== userId && userRole !== 'admin') {
     throw new ApiError(403, 'You can only edit your own tours');
   }
 
@@ -414,7 +422,7 @@ export const updateTour = asyncHandler(async (req: AuthRequest, res: Response) =
     throw new ApiError(400, 'Duration days must be at least 1');
   }
 
-  // Update fields and force status back to pending for re-approval
+  // Update fields and force status back to pending for re-approval (unless admin)
   tour.title = title;
   tour.shortDescription = shortDescription;
   tour.description = description;
@@ -437,8 +445,13 @@ export const updateTour = asyncHandler(async (req: AuthRequest, res: Response) =
   tour.startPoint = startPoint;
   tour.endPoint = endPoint;
   tour.startDates = startDates || [];
-  // Force re-approval
-  tour.status = 'pending';
+
+  // Admin edits go live immediately; regular user edits need re-approval
+  if (userRole === 'admin') {
+    tour.status = 'approved';
+  } else {
+    tour.status = 'pending';
+  }
   tour.rejectionReason = undefined;
 
   await tour.save();
@@ -448,7 +461,11 @@ export const updateTour = asyncHandler(async (req: AuthRequest, res: Response) =
     .populate('category', 'name slug icon')
     .lean();
 
-  res.status(200).json(new ApiResponse(200, 'Tour updated successfully. Pending admin re-approval.', populatedTour));
+  const message = userRole === 'admin'
+    ? 'Tour updated successfully and changes are now live.'
+    : 'Tour updated successfully. Pending admin re-approval.';
+
+  res.status(200).json(new ApiResponse(200, message, populatedTour));
 });
 
 export const deleteTour = asyncHandler(async (req: AuthRequest, res: Response) => {

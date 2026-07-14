@@ -57,8 +57,6 @@ destinationSchema.pre('save', function (next) {
   next();
 });
 
-destinationSchema.index({ slug: 1 });
-
 const Destination = mongoose.model<IDestination>('Destination', destinationSchema);
 
 export default Destination;

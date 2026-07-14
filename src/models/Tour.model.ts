@@ -226,7 +226,6 @@ tourSchema.pre('save', function (next) {
 // Index for search and filtering
 tourSchema.index({ title: 'text', description: 'text' });
 tourSchema.index({ destination: 1, category: 1, price: 1 });
-tourSchema.index({ slug: 1 });
 
 const Tour = mongoose.model<ITour>('Tour', tourSchema);
 

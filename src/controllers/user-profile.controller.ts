@@ -12,7 +12,7 @@ export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) =
   const userId = req.user?.id;
   if (!userId) throw new ApiError(401, 'Not authenticated');
 
-  let profile = await UserProfile.findOne({ userId }).lean();
+  let profile: any = await UserProfile.findOne({ userId }).lean();
   if (!profile) {
     profile = await UserProfile.create({ userId, role: (req.user as any)?.role || 'user' });
   }
@@ -60,14 +60,14 @@ export const updateProfile = asyncHandler(async (req: AuthRequest, res: Response
   if (image !== undefined) userUpdate.image = image;
 
   if (Object.keys(userUpdate).length > 1) {
-    const result = await db.collection('user').updateOne({ _id: userId }, { $set: userUpdate });
+    const result = await db.collection('user').updateOne({ _id: userId as any }, { $set: userUpdate });
     if (result.matchedCount === 0) {
       await db.collection('user').updateOne({ id: userId }, { $set: userUpdate });
     }
   }
 
   // Update UserProfile
-  let profile = await UserProfile.findOne({ userId });
+  let profile: any = await UserProfile.findOne({ userId });
   if (!profile) {
     profile = await UserProfile.create({ userId, phone, role: (req.user as any)?.role || 'user' });
   } else {

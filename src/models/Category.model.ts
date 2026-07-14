@@ -51,8 +51,6 @@ categorySchema.pre('save', function (next) {
   next();
 });
 
-categorySchema.index({ slug: 1 });
-
 const Category = mongoose.model<ICategory>('Category', categorySchema);
 
 export default Category;

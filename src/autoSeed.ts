@@ -1,5 +1,4 @@
 import mongoose from 'mongoose';
-import { MongoMemoryServer } from 'mongodb-memory-server';
 import Category from './models/Category.model';
 import Destination from './models/Destination.model';
 import Tour from './models/Tour.model';
