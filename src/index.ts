@@ -1,5 +1,5 @@
 import dns from 'node:dns';
-dns.setServers(['8.8.8.8', '8.8.4.4']);
+dns.setDefaultResultOrder('ipv4first');
 
 import express from 'express';
 import cors from 'cors';
@@ -20,8 +20,13 @@ import ApiResponse from './utils/ApiResponse.js';
 
 const app = express();
 
-// Security middleware
-app.use(helmet());
+// Security middleware - configure helmet to allow cross-origin cookies
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+    crossOriginOpenerPolicy: false,
+  })
+);
 
 // CORS configuration
 const allowedOrigins = [
@@ -45,7 +50,8 @@ app.use(
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Cookie', 'Set-Cookie'],
+    exposedHeaders: ['Set-Cookie'],
   })
 );
 
