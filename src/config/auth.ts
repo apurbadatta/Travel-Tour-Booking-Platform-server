@@ -6,7 +6,8 @@ import { getMongoDb } from './db.js';
 // Use any type to avoid complex generic type issues
 let authInstance: any = null;
 
-const isProduction = env.NODE_ENV === 'production';
+// Detect if running locally (localhost) vs deployed (Render/Vercel)
+const isLocalDev = env.BETTER_AUTH_URL.includes('localhost') && env.CLIENT_URL.includes('localhost');
 
 export const getAuth = (): any => {
   if (!authInstance) {
@@ -69,21 +70,21 @@ export const getAuth = (): any => {
 
       // Advanced cookie settings for cross-domain (Vercel client ↔ Render server)
       advanced: {
-        useSecureCookies: isProduction,
+        useSecureCookies: !isLocalDev,
         crossSubdomainCookies: {
           enabled: false, // Different domains, not subdomains
         },
-        defaultCookieAttributes: isProduction
+        defaultCookieAttributes: isLocalDev
           ? {
+              sameSite: 'lax' as const,
+              secure: false,
+              httpOnly: true,
+            }
+          : {
               sameSite: 'none' as const,
               secure: true,
               httpOnly: true,
               partitioned: true, // Chrome's CHIPS for cross-site cookies
-            }
-          : {
-              sameSite: 'lax' as const,
-              secure: false,
-              httpOnly: true,
             },
       },
     });

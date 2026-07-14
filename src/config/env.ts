@@ -26,7 +26,7 @@ export const env = {
   
   // better-auth configuration
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET || (isProduction ? '' : 'dev-secret-do-not-use-in-production'),
-  BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || 'http://localhost:5000',
+  BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || (isProduction ? 'https://travel-tour-booking-platform-server.onrender.com' : 'http://localhost:5000'),
   
   // Google OAuth (for better-auth)
   GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || '',
