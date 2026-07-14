@@ -10,8 +10,8 @@ import {
   getMyTours,
   updateTour,
   deleteTour,
-} from '../controllers/tour.controller';
-import { protect } from '../middlewares/protect';
+} from '../controllers/tour.controller.js';
+import { protect } from '../middlewares/protect.js';
 
 const router = Router();
 

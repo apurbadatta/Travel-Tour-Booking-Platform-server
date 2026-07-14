@@ -1,7 +1,7 @@
 import { betterAuth } from 'better-auth';
 import { mongodbAdapter } from 'better-auth/adapters/mongodb';
-import { env } from './env';
-import { getMongoDb } from './db';
+import { env } from './env.js';
+import { getMongoDb } from './db.js';
 
 // Use any type to avoid complex generic type issues
 let authInstance: any = null;

@@ -1,11 +1,11 @@
 import { Response } from 'express';
-import { getMongoDb } from '../config/db';
-import UserProfile from '../models/UserProfile.model';
-import Booking from '../models/Booking.model';
-import asyncHandler from '../utils/asyncHandler';
-import ApiError from '../utils/ApiError';
-import ApiResponse from '../utils/ApiResponse';
-import { AuthRequest } from '../types';
+import { getMongoDb } from '../config/db.js';
+import UserProfile from '../models/UserProfile.model.js';
+import Booking from '../models/Booking.model.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import ApiError from '../utils/ApiError.js';
+import ApiResponse from '../utils/ApiResponse.js';
+import { AuthRequest } from '../types/index.js';
 
 // GET /api/profile
 export const getProfile = asyncHandler(async (req: AuthRequest, res: Response) => {

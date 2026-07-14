@@ -1,6 +1,6 @@
 import { Response, NextFunction } from 'express';
-import { AuthRequest } from '../types';
-import ApiResponse from '../utils/ApiResponse';
+import { AuthRequest } from '../types/index.js';
+import ApiResponse from '../utils/ApiResponse.js';
 
 export const requireAdmin = (
   req: AuthRequest,

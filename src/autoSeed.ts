@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
-import Category from './models/Category.model';
-import Destination from './models/Destination.model';
-import Tour from './models/Tour.model';
-import User from './models/User.model';
-import Booking from './models/Booking.model';
-import { getAuth } from './config/auth';
+import Category from './models/Category.model.js';
+import Destination from './models/Destination.model.js';
+import Tour from './models/Tour.model.js';
+import User from './models/User.model.js';
+import Booking from './models/Booking.model.js';
+import { getAuth } from './config/auth.js';
 
 const adminUserId = new mongoose.Types.ObjectId();
 

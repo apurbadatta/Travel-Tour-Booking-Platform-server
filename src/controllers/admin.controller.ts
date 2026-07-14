@@ -1,14 +1,14 @@
 import { Request, Response } from 'express';
 import mongoose from 'mongoose';
-import Tour from '../models/Tour.model';
-import Category from '../models/Category.model';
-import Destination from '../models/Destination.model';
-import User from '../models/User.model';
-import Booking from '../models/Booking.model';
-import asyncHandler from '../utils/asyncHandler';
-import ApiError from '../utils/ApiError';
-import ApiResponse from '../utils/ApiResponse';
-import { AuthRequest } from '../types';
+import Tour from '../models/Tour.model.js';
+import Category from '../models/Category.model.js';
+import Destination from '../models/Destination.model.js';
+import User from '../models/User.model.js';
+import Booking from '../models/Booking.model.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import ApiError from '../utils/ApiError.js';
+import ApiResponse from '../utils/ApiResponse.js';
+import { AuthRequest } from '../types/index.js';
 
 // GET /api/admin/tours — all tours, status filter, pagination
 export const getAllTours = asyncHandler(async (req: Request, res: Response) => {

@@ -1,22 +1,22 @@
 import dns from 'node:dns';
-dns.setDefaultResultOrder('ipv4first');
+dns.setServers(['8.8.8.8', '8.8.4.4']);
 
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { toNodeHandler } from 'better-auth/node';
-import { getAuth } from './config/auth';
-import { env } from './config/env';
-import connectDB from './config/db';
-import { autoSeed } from './autoSeed';
-import errorHandler from './middlewares/errorHandler';
-import tourRoutes from './routes/tour.routes';
-import bookingRoutes from './routes/booking.routes';
-import adminRoutes from './routes/admin.routes';
-import contactRoutes from './routes/contact.routes';
-import userProfileRoutes from './routes/user-profile.routes';
-import ApiResponse from './utils/ApiResponse';
+import { getAuth } from './config/auth.js';
+import { env } from './config/env.js';
+import connectDB from './config/db.js';
+import { autoSeed } from './autoSeed.js';
+import errorHandler from './middlewares/errorHandler.js';
+import tourRoutes from './routes/tour.routes.js';
+import bookingRoutes from './routes/booking.routes.js';
+import adminRoutes from './routes/admin.routes.js';
+import contactRoutes from './routes/contact.routes.js';
+import userProfileRoutes from './routes/user-profile.routes.js';
+import ApiResponse from './utils/ApiResponse.js';
 
 const app = express();
 

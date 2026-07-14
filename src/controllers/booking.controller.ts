@@ -1,12 +1,12 @@
 import { Request, Response } from 'express';
 import Stripe from 'stripe';
-import Tour from '../models/Tour.model';
-import Booking from '../models/Booking.model';
-import asyncHandler from '../utils/asyncHandler';
-import ApiError from '../utils/ApiError';
-import ApiResponse from '../utils/ApiResponse';
-import { AuthRequest } from '../types';
-import { env } from '../config/env';
+import Tour from '../models/Tour.model.js';
+import Booking from '../models/Booking.model.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import ApiError from '../utils/ApiError.js';
+import ApiResponse from '../utils/ApiResponse.js';
+import { AuthRequest } from '../types/index.js';
+import { env } from '../config/env.js';
 
 // POST /api/bookings
 export const createBooking = asyncHandler(async (req: AuthRequest, res: Response) => {

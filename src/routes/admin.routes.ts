@@ -8,9 +8,9 @@ import {
   getAdminUsers,
   updateUserRole,
   getAdminBookings,
-} from '../controllers/admin.controller';
-import { protect } from '../middlewares/protect';
-import { requireAdmin } from '../middlewares/requireAdmin';
+} from '../controllers/admin.controller.js';
+import { protect } from '../middlewares/protect.js';
+import { requireAdmin } from '../middlewares/requireAdmin.js';
 
 const router = Router();
 

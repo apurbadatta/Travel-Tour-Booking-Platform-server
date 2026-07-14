@@ -1,7 +1,7 @@
 import { Response, NextFunction } from 'express';
-import { getAuth } from '../config/auth';
-import { AuthRequest } from '../types';
-import ApiResponse from '../utils/ApiResponse';
+import { getAuth } from '../config/auth.js';
+import { AuthRequest } from '../types/index.js';
+import ApiResponse from '../utils/ApiResponse.js';
 
 export const protect = async (
   req: AuthRequest,

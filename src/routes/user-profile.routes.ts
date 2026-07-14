@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { getProfile, updateProfile } from '../controllers/user-profile.controller';
-import { protect } from '../middlewares/protect';
+import { getProfile, updateProfile } from '../controllers/user-profile.controller.js';
+import { protect } from '../middlewares/protect.js';
 
 const router = Router();
 

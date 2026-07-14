@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import Category from './models/Category.model';
-import Destination from './models/Destination.model';
-import Tour from './models/Tour.model';
+import Category from './models/Category.model.js';
+import Destination from './models/Destination.model.js';
+import Tour from './models/Tour.model.js';
 
 dotenv.config();
 
