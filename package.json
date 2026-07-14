@@ -6,12 +6,12 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "node --import tsx/esm src/index.ts",
-    "build": "node ./node_modules/typescript/lib/tsc.js",
+    "build": "node node_modules/typescript/lib/tsc.js",
     "start": "node dist/index.js",
-    "vercel-build": "node ./node_modules/typescript/lib/tsc.js",
-    "lint": "node ./node_modules/eslint/bin/eslint.js src --ext .ts",
-    "lint:fix": "node ./node_modules/eslint/bin/eslint.js src --ext .ts --fix",
-    "seed": "node ./node_modules/ts-node-dev/lib/bin.js --transpile-only --esm src/seed.ts"
+    "vercel-build": "node node_modules/typescript/lib/tsc.js",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "seed": "tsx src/seed.ts"
   },
   "dependencies": {
     "better-auth": "^1.6.23",
@@ -21,7 +21,8 @@
     "helmet": "^7.1.0",
     "mongoose": "^8.6.0",
     "morgan": "^1.10.0",
-    "stripe": "^22.3.1"
+    "stripe": "^22.3.1",
+    "typescript": "^5.5.3"
   },
   "devDependencies": {
     "@types/cors": "^2.8.17",
@@ -32,8 +33,7 @@
     "@typescript-eslint/parser": "^7.16.0",
     "eslint": "^8.57.0",
     "ts-node-dev": "^2.0.0",
-    "tsx": "^4.23.1",
-    "typescript": "^5.5.3"
+    "tsx": "^4.23.1"
   },
   "keywords": [
     "tourify",
