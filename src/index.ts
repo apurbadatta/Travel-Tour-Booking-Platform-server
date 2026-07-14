@@ -18,17 +18,25 @@ import contactRoutes from './routes/contact.routes';
 import userProfileRoutes from './routes/user-profile.routes';
 import ApiResponse from './utils/ApiResponse';
 
-// Connect to MongoDB and auto-seed
-connectDB().then(() => autoSeed());
+let dbConnected = false;
+
+async function ensureDB() {
+  if (!dbConnected) {
+    await connectDB();
+    await autoSeed();
+    dbConnected = true;
+  }
+}
 
 const app = express();
 
 // Security middleware
 app.use(helmet());
 
-// CORS configuration - MUST be before better-auth handler
+// CORS configuration
 const allowedOrigins = [
   env.CLIENT_URL,
+  'https://travel-tour-booking-platform-client.vercel.app',
   'http://localhost:3000',
   'http://localhost:3001',
 ];
@@ -36,12 +44,10 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl, etc.)
       if (!origin) return callback(null, true);
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      // In development, allow all origins
       if (env.NODE_ENV === 'development') {
         return callback(null, true);
       }
@@ -54,9 +60,8 @@ app.use(
 );
 
 // better-auth handler - MUST be BEFORE express.json() body parsing
-// This handles all /api/auth/* routes automatically
-// Lazy handler: getAuth() is called per-request, after DB is connected
-app.use('/api/auth', (req, res) => {
+app.use('/api/auth', async (req, res) => {
+  await ensureDB();
   toNodeHandler(getAuth())(req, res);
 });
 
@@ -65,10 +70,13 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // HTTP request logging
-app.use(morgan('dev'));
+if (env.NODE_ENV === 'development') {
+  app.use(morgan('dev'));
+}
 
 // Health check route
-app.get('/api/health', (req, res) => {
+app.get('/api/health', async (_req, res) => {
+  await ensureDB();
   const response = new ApiResponse(200, 'Server is running', {
     status: 'healthy',
     timestamp: new Date().toISOString(),
@@ -79,19 +87,34 @@ app.get('/api/health', (req, res) => {
 });
 
 // Tour routes
-app.use('/api/tours', tourRoutes);
+app.use('/api/tours', async (req, res, next) => {
+  await ensureDB();
+  tourRoutes(req, res, next);
+});
 
 // Booking routes
-app.use('/api/bookings', bookingRoutes);
+app.use('/api/bookings', async (req, res, next) => {
+  await ensureDB();
+  bookingRoutes(req, res, next);
+});
 
 // Admin routes
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', async (req, res, next) => {
+  await ensureDB();
+  adminRoutes(req, res, next);
+});
 
 // Contact routes
-app.use('/api/contact', contactRoutes);
+app.use('/api/contact', async (req, res, next) => {
+  await ensureDB();
+  contactRoutes(req, res, next);
+});
 
 // Profile routes
-app.use('/api/profile', userProfileRoutes);
+app.use('/api/profile', async (req, res, next) => {
+  await ensureDB();
+  userProfileRoutes(req, res, next);
+});
 
 // 404 handler for undefined routes
 app.use('*', (req, res) => {
@@ -102,24 +125,26 @@ app.use('*', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Start server with auto port detection
-const startServer = (port: number) => {
-  app.listen(port)
-    .on('listening', () => {
-      console.log(`Server running in ${env.NODE_ENV} mode on port ${port}`);
-      console.log(`Auth endpoints available at: ${env.BETTER_AUTH_URL}/api/auth/*`);
-    })
-    .on('error', (err: NodeJS.ErrnoException) => {
-      if (err.code === 'EADDRINUSE') {
-        console.warn(`Port ${port} is busy, trying port ${port + 1}...`);
-        startServer(port + 1);
-      } else {
-        console.error('Server error:', err);
-        process.exit(1);
-      }
-    });
-};
+// For local development
+if (env.NODE_ENV !== 'production') {
+  const startServer = (port: number) => {
+    app.listen(port)
+      .on('listening', () => {
+        console.log(`Server running in ${env.NODE_ENV} mode on port ${port}`);
+        console.log(`Auth endpoints available at: ${env.BETTER_AUTH_URL}/api/auth/*`);
+      })
+      .on('error', (err: NodeJS.ErrnoException) => {
+        if (err.code === 'EADDRINUSE') {
+          console.warn(`Port ${port} is busy, trying port ${port + 1}...`);
+          startServer(port + 1);
+        } else {
+          console.error('Server error:', err);
+          process.exit(1);
+        }
+      });
+  };
+  startServer(env.PORT);
+}
 
-startServer(env.PORT);
-
+// Vercel serverless function export
 export default app;
